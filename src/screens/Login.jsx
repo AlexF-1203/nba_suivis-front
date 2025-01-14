@@ -15,7 +15,7 @@ const Login = ({ navigation }) => {
       console.log('Response:', response.data); // Pour déboguer
       if (response.data.data && response.data.data.token) {
         authLogin(response.data.data.user, response.data.data.token);
-        navigation.replace('Favorites');
+        navigation.replace('MainApp');
       } else {
         setError('Erreur de format de réponse');
       }
