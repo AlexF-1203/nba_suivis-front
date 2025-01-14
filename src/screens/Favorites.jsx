@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import api from '../api/api';
+import { API_URL } from '../api/api';
 
 const FavoritesScreen = () => {
   const [activeTab, setActiveTab] = useState('teams');
@@ -80,7 +81,7 @@ const FavoritesScreen = () => {
       <View style={styles.matchupInfo}>
         <View style={styles.teamSection}>
           <Image
-            source={{ uri: game.team_1?.logo_url }}
+            source={{ uri: `${API_URL}${game.team_1?.logo_url}` }}
             style={styles.logo}
             resizeMode="contain"
             defaultSource={require('../../assets/clev.png')}
@@ -101,7 +102,7 @@ const FavoritesScreen = () => {
 
         <View style={styles.teamSection}>
           <Image
-            source={{ uri: game.team_2?.logo_url }}
+            source={{ uri: `${API_URL}${game.team_2?.logo_url}` }}
             style={styles.logo}
             resizeMode="contain"
             defaultSource={require('../../assets/clev.png')}
