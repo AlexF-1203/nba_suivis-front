@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://6b91-88-184-112-195.ngrok-free.app/api/v1';
+const API_URL = 'https://d114-88-184-112-195.ngrok-free.app/api/v1';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -18,11 +18,20 @@ export const setAuthToken = (token) => {
 };
 
 export const login = (email, password) => {
-  return api.post('/login', { email, password });
+  const data = { user: { email, password } };
+  console.log('Login data being sent:', data);
+  return api.post('/login', data);
 };
 
-export const signup = (email, password, passwordConfirmation) => {
-  return api.post('/signup', { user: { email, password, password_confirmation: passwordConfirmation } });
+export const signup = (email, password, passwordConfirmation, username) => {
+  return api.post('/signup', {
+    user: {
+      email,
+      password,
+      password_confirmation: passwordConfirmation,
+      username
+    }
+  });
 };
 
 export const logout = () => {

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { signup } from '../api/api';
 
 const Signup = ({ navigation }) => {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
@@ -17,7 +18,7 @@ const Signup = ({ navigation }) => {
     }
 
     try {
-      const response = await signup(email, password, passwordConfirmation);
+      const response = await signup(email, password, passwordConfirmation, username);
       login(response.data.data, response.data.data.token);
       navigation.navigate('Login');
     } catch (err) {
@@ -27,6 +28,13 @@ const Signup = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Nom d'utilisateur"
+        value={username}
+        onChangeText={setUsername}
+        autoCapitalize="none"
+      />
       <TextInput
         style={styles.input}
         placeholder="Email"
