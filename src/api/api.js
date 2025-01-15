@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_URL = 'https://d114-88-184-112-195.ngrok-free.app/api/v1';
+export const API_URL = 'https://4967-88-184-112-195.ngrok-free.app/api/v1';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -40,6 +40,30 @@ export const logout = () => {
 
 export const getTeams = () => {
   return api.get('/teams');
+};
+
+export const getFavoriteTeams = () => {
+  return api.get('/favorite_teams');
+};
+
+export const addFavoriteTeam = (teamId) => {
+  return api.post('/favorite_teams', { team_id: teamId });
+};
+
+export const removeFavoriteTeam = (teamId) => {
+  return api.delete(`/favorite_teams/${teamId}`);
+};
+
+export const getFavoritePlayers = () => {
+  return api.get('/favorite_players');
+};
+
+export const addFavoritePlayer = (playerId) => {
+  return api.post('/favorite_players', { player_id: playerId });
+};
+
+export const removeFavoritePlayer = (playerId) => {
+  return api.delete(`/favorite_players/${playerId}`);
 };
 
 // Ajoutez d'autres appels API selon vos besoins
