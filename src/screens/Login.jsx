@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ActivityIndicator
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { login } from '../api/api';
 
@@ -7,65 +18,187 @@ const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login: authLogin } = useAuth();
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      setError('Veuillez remplir tous les champs');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
     try {
       const response = await login(email, password);
-      console.log('Response:', response.data); // Pour déboguer
       if (response.data.data && response.data.data.token) {
         authLogin(response.data.data.user, response.data.data.token);
         navigation.replace('MainApp');
-      } else {
-        setError('Erreur de format de réponse');
       }
     } catch (err) {
-      console.error('Login error:', err);
-      setError('Email ou mot de passe invalide');
+      setError('Email ou mot de passe incorrect');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Mot de passe"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Button title="Se connecter" onPress={handleLogin} />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Button
-        title="Pas de compte ? S'inscrire"
-        onPress={() => navigation.navigate('Signup')}
-      />
-    </View>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardView}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Connexion</Text>
+          <Text style={styles.subtitle}>Bienvenue sur NBA Suivis</Text>
+        </View>
+
+        <View style={styles.form}>
+          <View style={styles.inputContainer}>
+            <Ionicons name="mail-outline" size={24} color="#9e9e9e" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#9e9e9e"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed-outline" size={24} color="#9e9e9e" style={styles.inputIcon} />
+            <TextInput
+              style={[styles.input, styles.flex1]}
+              placeholder="Mot de passe"
+              placeholderTextColor="#9e9e9e"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.passwordIcon}
+            >
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={24}
+                color="#9e9e9e"
+              />
+            </TouchableOpacity>
+          </View>
+
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.loginButtonText}>Se connecter</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.signupButton}
+            onPress={() => navigation.navigate('Signup')}
+          >
+            <Text style={styles.signupButtonText}>
+              Pas de compte ? <Text style={styles.signupButtonTextBold}>S'inscrire</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 20,
+    backgroundColor: '#1a1a1a',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 40,
+    paddingBottom: 20,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#9e9e9e',
+  },
+  form: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2a2a2a',
+    borderRadius: 12,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    height: 56,
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  flex1: {
+    flex: 1,
+  },
+  passwordIcon: {
+    padding: 4,
   },
   error: {
-    color: 'red',
-    marginBottom: 10,
+    color: '#FF4444',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  loginButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 12,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  loginButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  signupButton: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  signupButtonText: {
+    color: '#9e9e9e',
+    fontSize: 16,
+  },
+  signupButtonTextBold: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
 });
 

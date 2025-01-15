@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import api, { API_URL } from '../api/api';
+import { StatusBar } from 'expo-status-bar';
 
 const FavoritesScreen = () => {
   const [activeTab, setActiveTab] = useState('teams');
@@ -133,6 +134,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1a1a1a',
+    paddingTop: StatusBar.currentHeight,
   },
   tabContainer: {
     flexDirection: 'row',

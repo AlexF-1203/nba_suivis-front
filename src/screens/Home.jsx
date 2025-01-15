@@ -135,7 +135,7 @@ const FavoritesScreen = () => {
       <TouchableOpacity
         style={[styles.playerCard, isExpanded && styles.expandedCard]}
         onPress={() => setExpandedPlayer(isExpanded ? null : player.id)}
-        activeOpacity={0.7} // Ajout pour un meilleur feedback visuel
+        activeOpacity={1} // Ajout pour un meilleur feedback visuel
       >
         <View style={styles.playerBasicInfo}>
           <Image
