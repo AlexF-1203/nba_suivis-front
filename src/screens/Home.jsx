@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
 import { API_URL } from '../api/api';
 
@@ -12,6 +13,9 @@ const FavoritesScreen = () => {
 
   useEffect(() => {
     fetchFavorites();
+    // Mettre à jour les scores toutes les 30 secondes
+    const interval = setInterval(fetchFavorites, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchFavorites = async () => {
@@ -28,10 +32,8 @@ const FavoritesScreen = () => {
     }
   };
 
-  // Fonction pour générer des stats aléatoires
   const getPlayerStats = (playerId) => {
     if (!playerStats[playerId]) {
-      // Si les stats n'existent pas encore, on les génère et les stocke
       const stats = {
         pts: Math.floor(Math.random() * 30),
         reb: Math.floor(Math.random() * 15),
@@ -76,56 +78,124 @@ const FavoritesScreen = () => {
     </View>
   );
 
-  const TeamCard = ({ game }) => (
-    <View style={styles.gameCard}>
-      <View style={styles.matchupInfo}>
-        <View style={styles.teamSection}>
-          <Image
-            source={{ uri: `${API_URL}${game.team_1?.logo_url}` }}
-            style={styles.logo}
-            resizeMode="contain"
-            defaultSource={require('../../assets/clev.png')}
-          />
-          <Text style={styles.teamName}>{game.team_1?.name}</Text>
-          <Text style={styles.record}>25-14</Text>
+  const QuarterScores = ({ game }) => (
+    <View style={styles.quarterScores}>
+      <Text style={styles.quartersTitle}>Score par quart-temps</Text>
+      <View style={styles.quartersGrid}>
+        <View style={styles.quartersHeader}>
+          <Text style={styles.quarterLabel}>Équipe</Text>
+          <Text style={styles.quarterLabel}>Q1</Text>
+          <Text style={styles.quarterLabel}>Q2</Text>
+          <Text style={styles.quarterLabel}>Q3</Text>
+          <Text style={styles.quarterLabel}>Q4</Text>
         </View>
 
-        <View style={styles.scoreSection}>
-          <Text style={[styles.score, { color: game.team_1_score > game.team_2_score ? '#4CAF50' : '#FF5252' }]}>
-            {game.team_1_score}
-          </Text>
-          <Text style={styles.scoreLabel}>Score</Text>
-          <Text style={[styles.score, { color: game.team_2_score > game.team_1_score ? '#4CAF50' : '#FF5252' }]}>
-            {game.team_2_score}
-          </Text>
+        <View style={styles.quarterRow}>
+          <Text style={styles.quarterTeamName}>{game.team_1?.name}</Text>
+          <Text style={styles.quarterValue}>{game.team_1_q1 || '-'}</Text>
+          <Text style={styles.quarterValue}>{game.team_1_q2 || '-'}</Text>
+          <Text style={styles.quarterValue}>{game.team_1_q3 || '-'}</Text>
+          <Text style={styles.quarterValue}>{game.team_1_q4 || '-'}</Text>
         </View>
 
-        <View style={styles.teamSection}>
-          <Image
-            source={{ uri: `${API_URL}${game.team_2?.logo_url}` }}
-            style={styles.logo}
-            resizeMode="contain"
-            defaultSource={require('../../assets/clev.png')}
-          />
-          <Text style={styles.teamName}>{game.team_2?.name}</Text>
-          <Text style={styles.record}>20-16</Text>
+        <View style={styles.quarterRow}>
+          <Text style={styles.quarterTeamName}>{game.team_2?.name}</Text>
+          <Text style={styles.quarterValue}>{game.team_2_q1 || '-'}</Text>
+          <Text style={styles.quarterValue}>{game.team_2_q2 || '-'}</Text>
+          <Text style={styles.quarterValue}>{game.team_2_q3 || '-'}</Text>
+          <Text style={styles.quarterValue}>{game.team_2_q4 || '-'}</Text>
         </View>
       </View>
-
-      {/* <View style={styles.quarterScores}>
-        <View style={styles.quarters}>
-          {[1, 2, 3, 4].map((quarter) => (
-            <View key={quarter} style={styles.quarterItem}>
-              <Text style={styles.quarterNumber}>{quarter}</Text>
-              <Text style={styles.quarterScore}>
-                {Math.floor(Math.random() * 20) + 20}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </View> */}
     </View>
   );
+
+  const TeamCard = ({ game }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    return (
+      <TouchableOpacity
+        style={[styles.gameCard, isExpanded && styles.expandedCard]}
+        onPress={() => setIsExpanded(!isExpanded)}
+        activeOpacity={0.9}
+      >
+        <View style={styles.matchupInfo}>
+          <View style={styles.teamSection}>
+            <Image
+              source={{ uri: `${API_URL}${game.team_1?.logo_url}` }}
+              style={styles.logo}
+              resizeMode="contain"
+              defaultSource={require('../../assets/clev.png')}
+            />
+            <Text style={styles.teamName}>{game.team_1?.name}</Text>
+            {/* <Text style={styles.record}>{game.team_2?.wins}-{game.team_2?.losses}</Text> */}
+          </View>
+
+          <View style={styles.scoreSection}>
+            <Text style={[styles.score_1, { color: game.team_1_score > game.team_2_score ? '#4CAF50' : '#FF5252' }]}>
+              {game.team_1_score}
+            </Text>
+            <Text style={styles.scoreLabel}>VS</Text>
+            <Text style={[styles.score_2, { color: game.team_2_score > game.team_1_score ? '#4CAF50' : '#FF5252' }]}>
+              {game.team_2_score}
+            </Text>
+          </View>
+
+          <View style={styles.teamSection}>
+            <Image
+              source={{ uri: `${API_URL}${game.team_2?.logo_url}` }}
+              style={styles.logo}
+              resizeMode="contain"
+              defaultSource={require('../../assets/clev.png')}
+            />
+            <Text style={styles.teamName}>{game.team_2?.name}</Text>
+            {/* <Text style={styles.record}>{game.team_2?.wins}-{game.team_2?.losses}</Text> */}
+          </View>
+        </View>
+
+        {isExpanded && (
+          <View style={styles.quarterScores}>
+            <Text style={styles.quartersTitle}>Score par quart-temps</Text>
+            <View style={styles.quartersGrid}>
+              <View style={styles.quartersHeader}>
+                <Text style={styles.quarterLabel}>Équipe</Text>
+                <Text style={styles.quarterLabel}>Q1</Text>
+                <Text style={styles.quarterLabel}>Q2</Text>
+                <Text style={styles.quarterLabel}>Q3</Text>
+                <Text style={styles.quarterLabel}>Q4</Text>
+              </View>
+
+              <View style={styles.quarterRow}>
+                <Text style={styles.quarterTeamName}>{game.team_1?.name}</Text>
+                <Text style={styles.quarterValue}>{game.team_1_q1 || '-'}</Text>
+                <Text style={styles.quarterValue}>{game.team_1_q2 || '-'}</Text>
+                <Text style={styles.quarterValue}>{game.team_1_q3 || '-'}</Text>
+                <Text style={styles.quarterValue}>{game.team_1_q4 || '-'}</Text>
+              </View>
+
+              <View style={styles.quarterRow}>
+                <Text style={styles.quarterTeamName}>{game.team_2?.name}</Text>
+                <Text style={styles.quarterValue}>{game.team_2_q1 || '-'}</Text>
+                <Text style={styles.quarterValue}>{game.team_2_q2 || '-'}</Text>
+                <Text style={styles.quarterValue}>{game.team_2_q3 || '-'}</Text>
+                <Text style={styles.quarterValue}>{game.team_2_q4 || '-'}</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.expandIndicator}>
+          <Text style={styles.expandText}>
+            {isExpanded ? 'Masquer les détails' : 'Voir les détails'}
+          </Text>
+          <Ionicons
+            name={isExpanded ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color="#9e9e9e"
+          />
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const PlayerCard = ({ player }) => {
     const isExpanded = expandedPlayer === player.id;
@@ -135,7 +205,7 @@ const FavoritesScreen = () => {
       <TouchableOpacity
         style={[styles.playerCard, isExpanded && styles.expandedCard]}
         onPress={() => setExpandedPlayer(isExpanded ? null : player.id)}
-        activeOpacity={1} // Ajout pour un meilleur feedback visuel
+        activeOpacity={1}
       >
         <View style={styles.playerBasicInfo}>
           <Image
@@ -266,8 +336,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scoreSection: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     flex: 1,
+    gap: 5,
   },
   logo: {
     width: 50,
@@ -290,9 +363,13 @@ const styles = StyleSheet.create({
     color: '#9e9e9e',
     fontSize: 12,
   },
-  score: {
-    fontSize: 24,
+  score_1: {
+    fontSize: 20,
     fontWeight: 'bold',
+  },
+  score_2: {
+    fontSize: 20,
+  fontWeight: 'bold',
   },
   scoreLabel: {
     color: '#9e9e9e',
@@ -300,26 +377,48 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   quarterScores: {
-    marginTop: 12,
-    paddingTop: 12,
+    marginTop: 16,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#3a3a3a',
   },
-  quarters: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  quarterItem: {
-    alignItems: 'center',
-  },
-  quarterNumber: {
+  quartersTitle: {
     color: '#9e9e9e',
-    fontSize: 12,
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  quartersGrid: {
+    backgroundColor: '#222222',
+    borderRadius: 8,
+    padding: 12,
+  },
+  quartersHeader: {
+    flexDirection: 'row',
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#3a3a3a',
+    paddingBottom: 8,
+  },
+  quarterRow: {
+    flexDirection: 'row',
     marginBottom: 4,
   },
-  quarterScore: {
+  quarterLabel: {
+    flex: 1,
+    color: '#9e9e9e',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  quarterTeamName: {
+    flex: 1,
     color: '#ffffff',
     fontSize: 14,
+  },
+  quarterValue: {
+    flex: 1,
+    color: '#ffffff',
+    fontSize: 14,
+    textAlign: 'center',
   },
   playerCard: {
     backgroundColor: '#2a2a2a',
@@ -394,6 +493,88 @@ const styles = StyleSheet.create({
   },
   expandedCard: {
     backgroundColor: '#2a2a2a',
+  },
+  quarters: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  quarterItem: {
+    alignItems: 'center',
+  },
+  quarterNumber: {
+    color: '#9e9e9e',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  quarterScore: {
+    color: '#ffffff',
+    fontSize: 14,
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  expandIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#3a3a3a',
+    marginTop: 12,
+  },
+  expandText: {
+    color: '#9e9e9e',
+    fontSize: 14,
+    marginRight: 8,
+  },
+  gameCard: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 15,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    padding: 16,
+    elevation: 3,
+  },
+  expandedCard: {
+    backgroundColor: '#2a2a2a',
+  },
+  quarterScores: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#3a3a3a',
+  },
+  quartersGrid: {
+    backgroundColor: '#222222',
+    borderRadius: 8,
+    padding: 12,
+  },
+  quartersHeader: {
+    flexDirection: 'row',
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#3a3a3a',
+    paddingBottom: 8,
+  },
+  quarterLabel: {
+    flex: 1,
+    color: '#9e9e9e',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  quarterTeamName: {
+    flex: 1,
+    color: '#ffffff',
+    fontSize: 14,
+    paddingLeft: 8,
+  },
+  quarterValue: {
+    flex: 1,
+    color: '#ffffff',
+    fontSize: 14,
+    textAlign: 'center',
   }
 });
 
