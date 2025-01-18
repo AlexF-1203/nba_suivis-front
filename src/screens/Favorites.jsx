@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import api, { API_URL } from '../api/api';
 import { StatusBar } from 'expo-status-bar';
 
@@ -9,6 +10,7 @@ const FavoritesScreen = () => {
   const [players, setPlayers] = useState([]);
   const [favoriteTeams, setFavoriteTeams] = useState([]);
   const [favoritePlayers, setFavoritePlayers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -56,6 +58,16 @@ const FavoritesScreen = () => {
     }
   };
 
+  const filteredPlayers = players.filter(player =>
+    player.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    player.team?.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredTeams = teams.filter(team =>
+    team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    team.city.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const TeamCard = ({ team }) => {
     const isFavorite = favoriteTeams.includes(team.id);
 
@@ -85,7 +97,10 @@ const FavoritesScreen = () => {
 
     return (
       <View style={styles.playerCard}>
-        <Text style={styles.playerName}>{player.name}</Text>
+        <View style={styles.playerInfo}>
+          <Text style={styles.playerName}>{player.name}</Text>
+          <Text style={styles.teamName}>{player.team?.name}</Text>
+        </View>
         <TouchableOpacity
           style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive]}
           onPress={() => toggleFavoritePlayer(player.id)}
@@ -100,6 +115,24 @@ const FavoritesScreen = () => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={20} color="#9e9e9e" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Rechercher un joueur ou une équipe..."
+            placeholderTextColor="#9e9e9e"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery !== '' && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color="#9e9e9e" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'teams' && styles.activeTab]}
@@ -121,9 +154,18 @@ const FavoritesScreen = () => {
 
       <ScrollView style={styles.content}>
         {activeTab === 'teams' ? (
-          teams.map((team) => <TeamCard key={team.id} team={team} />)
+          filteredTeams.map((team) => <TeamCard key={team.id} team={team} />)
         ) : (
-          players.map((player) => <PlayerCard key={player.id} player={player} />)
+          filteredPlayers.map((player) => <PlayerCard key={player.id} player={player} />)
+        )}
+        {((activeTab === 'teams' && filteredTeams.length === 0) ||
+          (activeTab === 'players' && filteredPlayers.length === 0)) && searchQuery !== '' && (
+          <View style={styles.noResultsContainer}>
+            <Ionicons name="search" size={50} color="#9e9e9e" />
+            <Text style={styles.noResultsText}>
+              Aucun résultat trouvé pour "{searchQuery}"
+            </Text>
+          </View>
         )}
       </ScrollView>
     </View>
@@ -134,7 +176,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1a1a1a',
-    paddingTop: StatusBar.currentHeight,
+  },
+  searchContainer: {
+    padding: 16,
+    // backgroundColor: '#1a1a1a',
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3a3a3a',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#ffffff',
+    marginLeft: 8,
+    fontSize: 16,
+    height: 40,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -179,16 +239,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  playerInfo: {
+    flex: 1,
+  },
   logo: {
     width: 50,
     height: 50,
     marginBottom: 8,
   },
   teamName: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    color: '#9e9e9e',
+    fontSize: 14,
+    marginTop: 4,
   },
   playerName: {
     color: '#ffffff',
@@ -199,7 +261,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
     padding: 8,
     borderRadius: 5,
-    marginTop: 8,
+    minWidth: 80,
+    alignItems: 'center',
   },
   favoriteButtonActive: {
     backgroundColor: '#FF5252',
@@ -207,7 +270,6 @@ const styles = StyleSheet.create({
   favoriteButtonText: {
     color: '#ffffff',
     fontWeight: 'bold',
-    textAlign: 'center',
   },
 });
 
