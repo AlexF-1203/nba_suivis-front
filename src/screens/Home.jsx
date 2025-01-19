@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Button } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
 import { API_URL } from '../api/api';
 
-const FavoritesScreen = () => {
+const FavoritesScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('teams');
   const [expandedPlayer, setExpandedPlayer] = useState(null);
   const [favoriteTeams, setFavoriteTeams] = useState([]);
@@ -109,8 +109,9 @@ const FavoritesScreen = () => {
     </View>
   );
 
-  const TeamCard = ({ game }) => {
+  const TeamCard = ({ game, navigation  }) => {
     const [isExpanded, setIsExpanded] = useState(false);
+    const goTo = () => navigation.navigate("GameStats", {gameId: game.id});
 
     return (
       <TouchableOpacity
@@ -180,6 +181,12 @@ const FavoritesScreen = () => {
                 <Text style={styles.quarterValue}>{game.team_2_q4 || '-'}</Text>
               </View>
             </View>
+            <TouchableOpacity
+              style={styles.statsButton}
+              onPress={goTo}
+            >
+              <Text style={styles.statsButtonText}>Game Stats</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -276,7 +283,7 @@ const FavoritesScreen = () => {
       <ScrollView style={styles.content}>
         {activeTab === 'teams' ? (
           favoriteTeams.map((game, index) => (
-            <TeamCard key={index} game={game} />
+            <TeamCard key={index} game={game} navigation={navigation} />
           ))
         ) : (
           favoritePlayers.map((player) => (
@@ -334,6 +341,18 @@ const styles = StyleSheet.create({
   teamSection: {
     alignItems: 'center',
     flex: 1,
+  },
+  statsButton: {
+    backgroundColor: '#4CAF50',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  statsButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   scoreSection: {
     flexDirection: 'row',

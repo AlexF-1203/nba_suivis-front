@@ -10,6 +10,7 @@ import Signup from './src/screens/Signup';
 import Home from "./src/screens/Home";
 import Favorites from './src/screens/Favorites';
 import Profile from './src/screens/Profile.jsx';
+import GameStats from './src/screens/GameStats';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -82,6 +83,7 @@ export default function App() {
             <Stack.Screen name="MainApp" component={TabNavigator} />
             <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="Signup" component={Signup} />
+            <Stack.Screen name="GameStats" component={GameStats} />
           </Stack.Navigator>
         </AuthProvider>
       </NavigationContainer>
