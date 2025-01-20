@@ -127,7 +127,7 @@ const FavoritesScreen = ({ navigation }) => {
               resizeMode="contain"
               defaultSource={require('../../assets/clev.png')}
             />
-            <Text style={styles.teamName}>{game.team_1?.name}</Text>
+            <Text style={styles.teamName}>{game.team_1?.city}</Text>
             {/* <Text style={styles.record}>{game.team_2?.wins}-{game.team_2?.losses}</Text> */}
           </View>
 
@@ -148,7 +148,7 @@ const FavoritesScreen = ({ navigation }) => {
               resizeMode="contain"
               defaultSource={require('../../assets/clev.png')}
             />
-            <Text style={styles.teamName}>{game.team_2?.name}</Text>
+            <Text style={styles.teamName}>{game.team_2?.city}</Text>
             {/* <Text style={styles.record}>{game.team_2?.wins}-{game.team_2?.losses}</Text> */}
           </View>
         </View>
@@ -166,7 +166,7 @@ const FavoritesScreen = ({ navigation }) => {
               </View>
 
               <View style={styles.quarterRow}>
-                <Text style={styles.quarterTeamName}>{game.team_1?.name}</Text>
+                <Text style={styles.quarterTeamName}>{game.team_1?.city}</Text>
                 <Text style={styles.quarterValue}>{game.team_1_q1 || '-'}</Text>
                 <Text style={styles.quarterValue}>{game.team_1_q2 || '-'}</Text>
                 <Text style={styles.quarterValue}>{game.team_1_q3 || '-'}</Text>
@@ -174,7 +174,7 @@ const FavoritesScreen = ({ navigation }) => {
               </View>
 
               <View style={styles.quarterRow}>
-                <Text style={styles.quarterTeamName}>{game.team_2?.name}</Text>
+                <Text style={styles.quarterTeamName}>{game.team_2?.city}</Text>
                 <Text style={styles.quarterValue}>{game.team_2_q1 || '-'}</Text>
                 <Text style={styles.quarterValue}>{game.team_2_q2 || '-'}</Text>
                 <Text style={styles.quarterValue}>{game.team_2_q3 || '-'}</Text>
@@ -261,7 +261,7 @@ const FavoritesScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.tabContainer}>
+      {/* <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'teams' && styles.activeTab]}
           onPress={() => setActiveTab('teams')}
@@ -278,7 +278,7 @@ const FavoritesScreen = ({ navigation }) => {
             Joueur
           </Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       <ScrollView style={styles.content}>
         {activeTab === 'teams' ? (

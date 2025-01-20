@@ -39,10 +39,10 @@ function TabNavigator() {
       headerTitleStyle: {
         fontWeight: 'bold',
       },
-      headerShadowVisible: false // Supprime la ligne de séparation du header
+      headerShadowVisible: false ,// Supprime la ligne de séparation du header
     }}
   >
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Favoris"
         component={Favorites}
         options={{
@@ -50,9 +50,9 @@ function TabNavigator() {
             <Ionicons name="star" size={size} color={color} />
           ),
         }}
-      />
+      /> */}
       <Tab.Screen
-        name="Home"
+        name="Game Day"
         component={Home}
         options={{
           tabBarIcon: ({ color, size }) => (
