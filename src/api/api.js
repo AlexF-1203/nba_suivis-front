@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_URL = 'https://79df-88-184-112-195.ngrok-free.app/api/v1';
+export const API_URL = 'https://925a-88-184-112-195.ngrok-free.app/api/v1';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -64,6 +64,16 @@ export const addFavoritePlayer = (playerId) => {
 
 export const removeFavoritePlayer = (playerId) => {
   return api.delete(`/favorite_players/${playerId}`);
+};
+
+export const getGames = (date) => {
+  return api.get('/games', {
+    params: { date: date }
+  });
+};
+
+export const getAvailableDates = () => {
+  return api.get('/games/available_dates');
 };
 
 // Ajoutez d'autres appels API selon vos besoins

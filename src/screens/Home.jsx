@@ -1,117 +1,75 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Button } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import api from '../api/api';
-import { API_URL } from '../api/api';
+import api, { API_URL } from '../api/api';
+import { format, parseISO, addDays, isSameDay } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
-const FavoritesScreen = ({ navigation }) => {
-  const [activeTab, setActiveTab] = useState('teams');
-  const [expandedPlayer, setExpandedPlayer] = useState(null);
-  const [favoriteTeams, setFavoriteTeams] = useState([]);
-  const [favoritePlayers, setFavoritePlayers] = useState([]);
-  const [playerStats, setPlayerStats] = useState({});
+const HomeScreen = ({ navigation }) => {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [games, setGames] = useState([]);
+  const [availableDates, setAvailableDates] = useState([]);
 
   useEffect(() => {
-    fetchFavorites();
-    // Mettre à jour les scores toutes les 30 secondes
-    const interval = setInterval(fetchFavorites, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    fetchGames();
+    fetchAvailableDates();
+  }, [currentDate]);
 
-  const fetchFavorites = async () => {
+  const fetchGames = async () => {
     try {
-      // Fetch teams
-      const teamsResponse = await api.get('/games');
-      setFavoriteTeams(teamsResponse.data);
-
-      // Fetch players
-      const playersResponse = await api.get('/players');
-      setFavoritePlayers(playersResponse.data);
+      const formattedDate = format(currentDate, 'yyyy-MM-dd');
+      const response = await api.get('/games', {
+        params: { date: formattedDate }
+      });
+      setGames(response.data);
     } catch (error) {
-      console.error('Error fetching favorites:', error);
+      console.error('Error fetching games:', error);
     }
   };
 
-  const getPlayerStats = (playerId) => {
-    if (!playerStats[playerId]) {
-      const stats = {
-        pts: Math.floor(Math.random() * 30),
-        reb: Math.floor(Math.random() * 15),
-        pd: Math.floor(Math.random() * 10),
-        min: Math.floor(Math.random() * 40),
-        oreb: Math.floor(Math.random() * 8),
-        dreb: Math.floor(Math.random() * 10),
-        blk: Math.floor(Math.random() * 5),
-        stl: Math.floor(Math.random() * 5),
-        ftPercentage: Math.floor(Math.random() * 100),
-        tsPercentage: Math.floor(Math.random() * 100),
-        seasonTrends: {
-          pts: Math.random() > 0.5 ? 'up' : 'down',
-          reb: Math.random() > 0.5 ? 'up' : 'down',
-          pd: Math.random() > 0.5 ? 'up' : 'down',
-          min: Math.random() > 0.5 ? 'up' : 'down'
-        }
-      };
-      setPlayerStats(prev => ({
-        ...prev,
-        [playerId]: stats
-      }));
-      return stats;
+  const fetchAvailableDates = async () => {
+    try {
+      const response = await api.get('/games/available_dates');
+      setAvailableDates(response.data.dates.map(date => parseISO(date)));
+    } catch (error) {
+      console.error('Error fetching dates:', error);
     }
-    return playerStats[playerId];
   };
 
-  const StatItem = ({ label, value, trend }) => (
-    <View style={styles.statItem}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <View style={styles.statValueContainer}>
-        <Text style={styles.statValue}>{value}</Text>
-        {trend && (
-          <Text style={[
-            styles.trendIndicator,
-            { color: trend === 'up' ? '#4CAF50' : trend === 'down' ? '#FF5252' : '#9e9e9e' }
-          ]}>
-            {trend === 'up' ? '↑' : trend === 'down' ? '↓' : '─'}
-          </Text>
+  const goToNextDay = () => {
+    const nextDay = addDays(currentDate, 1);
+    setCurrentDate(nextDay);
+  };
+
+  const goToPreviousDay = () => {
+    const previousDay = addDays(currentDate, -1);
+    setCurrentDate(previousDay);
+  };
+
+  const DateNavigator = () => (
+    <View style={styles.dateNavigator}>
+      <TouchableOpacity onPress={goToPreviousDay} style={styles.dateNavButton}>
+        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      <View style={styles.dateContainer}>
+        <Text style={styles.dateText}>
+          {format(currentDate, 'EEEE d MMMM', { locale: fr })}
+        </Text>
+        {isSameDay(currentDate, new Date()) && (
+          <Text style={styles.todayIndicator}>Aujourd'hui</Text>
         )}
       </View>
+
+      <TouchableOpacity onPress={goToNextDay} style={styles.dateNavButton}>
+        <Ionicons name="chevron-forward" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
     </View>
   );
 
-  const QuarterScores = ({ game }) => (
-    <View style={styles.quarterScores}>
-      <Text style={styles.quartersTitle}>Score par quart-temps</Text>
-      <View style={styles.quartersGrid}>
-        <View style={styles.quartersHeader}>
-          <Text style={styles.quarterLabel}>Équipe</Text>
-          <Text style={styles.quarterLabel}>Q1</Text>
-          <Text style={styles.quarterLabel}>Q2</Text>
-          <Text style={styles.quarterLabel}>Q3</Text>
-          <Text style={styles.quarterLabel}>Q4</Text>
-        </View>
-
-        <View style={styles.quarterRow}>
-          <Text style={styles.quarterTeamName}>{game.team_1?.name}</Text>
-          <Text style={styles.quarterValue}>{game.team_1_q1 || '-'}</Text>
-          <Text style={styles.quarterValue}>{game.team_1_q2 || '-'}</Text>
-          <Text style={styles.quarterValue}>{game.team_1_q3 || '-'}</Text>
-          <Text style={styles.quarterValue}>{game.team_1_q4 || '-'}</Text>
-        </View>
-
-        <View style={styles.quarterRow}>
-          <Text style={styles.quarterTeamName}>{game.team_2?.name}</Text>
-          <Text style={styles.quarterValue}>{game.team_2_q1 || '-'}</Text>
-          <Text style={styles.quarterValue}>{game.team_2_q2 || '-'}</Text>
-          <Text style={styles.quarterValue}>{game.team_2_q3 || '-'}</Text>
-          <Text style={styles.quarterValue}>{game.team_2_q4 || '-'}</Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  const TeamCard = ({ game, navigation  }) => {
+  const TeamCard = ({ game }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const goTo = () => navigation.navigate("GameStats", {gameId: game.id});
+    const goToGameStats = () => navigation.navigate("GameStats", {gameId: game.id});
 
     return (
       <TouchableOpacity
@@ -128,7 +86,6 @@ const FavoritesScreen = ({ navigation }) => {
               defaultSource={require('../../assets/clev.png')}
             />
             <Text style={styles.teamName}>{game.team_1?.city}</Text>
-            {/* <Text style={styles.record}>{game.team_2?.wins}-{game.team_2?.losses}</Text> */}
           </View>
 
           <View style={styles.scoreSection}>
@@ -149,7 +106,6 @@ const FavoritesScreen = ({ navigation }) => {
               defaultSource={require('../../assets/clev.png')}
             />
             <Text style={styles.teamName}>{game.team_2?.city}</Text>
-            {/* <Text style={styles.record}>{game.team_2?.wins}-{game.team_2?.losses}</Text> */}
           </View>
         </View>
 
@@ -183,7 +139,7 @@ const FavoritesScreen = ({ navigation }) => {
             </View>
             <TouchableOpacity
               style={styles.statsButton}
-              onPress={goTo}
+              onPress={goToGameStats}
             >
               <Text style={styles.statsButtonText}>Game Stats</Text>
             </TouchableOpacity>
@@ -204,91 +160,18 @@ const FavoritesScreen = ({ navigation }) => {
     );
   };
 
-  const PlayerCard = ({ player }) => {
-    const isExpanded = expandedPlayer === player.id;
-    const stats = getPlayerStats(player.id);
-
-    return (
-      <TouchableOpacity
-        style={[styles.playerCard, isExpanded && styles.expandedCard]}
-        onPress={() => setExpandedPlayer(isExpanded ? null : player.id)}
-        activeOpacity={1}
-      >
-        <View style={styles.playerBasicInfo}>
-          <Image
-            source={{ uri: player.team?.logo_url }}
-            style={styles.teamLogo}
-            defaultSource={require('../../assets/clev.png')}
-          />
-          <Text style={styles.playerName}>{player.name}</Text>
-          <Text style={[styles.statusText, { color: Math.random() > 0.5 ? '#4CAF50' : '#FF5252' }]}>
-            {Math.random() > 0.5 ? 'Win' : 'Lose'}
-          </Text>
-        </View>
-
-        <View style={styles.statsRow}>
-          <StatItem label="Pts" value={stats.pts} />
-          <StatItem label="Reb" value={stats.reb} />
-          <StatItem label="PD" value={stats.pd} />
-          <StatItem label="Min" value={stats.min} />
-        </View>
-
-        {isExpanded && (
-          <>
-            <View style={styles.advancedStatsRow}>
-              <StatItem label="OReb" value={stats.oreb} />
-              <StatItem label="DReb" value={stats.dreb} />
-              <StatItem label="BLK" value={stats.blk} />
-              <StatItem label="STL" value={stats.stl} />
-              <StatItem label="FT%" value={`${stats.ftPercentage}%`} />
-              <StatItem label="TS%" value={`${stats.tsPercentage}%`} />
-            </View>
-
-            <View style={styles.separator} />
-
-            <Text style={styles.sectionTitle}>Stats saison</Text>
-            <View style={styles.seasonStatsRow}>
-              <StatItem label="Pts" value={stats.pts} trend={stats.seasonTrends.pts} />
-              <StatItem label="Reb" value={stats.reb} trend={stats.seasonTrends.reb} />
-              <StatItem label="PD" value={stats.pd} trend={stats.seasonTrends.pd} />
-              <StatItem label="Min" value={stats.min} trend={stats.seasonTrends.min} />
-            </View>
-          </>
-        )}
-      </TouchableOpacity>
-    );
-  };
-
   return (
     <View style={styles.container}>
-      {/* <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'teams' && styles.activeTab]}
-          onPress={() => setActiveTab('teams')}
-        >
-          <Text style={[styles.tabText, activeTab === 'teams' && styles.activeTabText]}>
-            Équipe
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'players' && styles.activeTab]}
-          onPress={() => setActiveTab('players')}
-        >
-          <Text style={[styles.tabText, activeTab === 'players' && styles.activeTabText]}>
-            Joueur
-          </Text>
-        </TouchableOpacity>
-      </View> */}
-
+      <DateNavigator />
       <ScrollView style={styles.content}>
-        {activeTab === 'teams' ? (
-          favoriteTeams.map((game, index) => (
-            <TeamCard key={index} game={game} navigation={navigation} />
+        {games.length > 0 ? (
+          games.map((game, index) => (
+            <TeamCard key={index} game={game} />
           ))
         ) : (
-          favoritePlayers.map((player) => (
-            <PlayerCard key={player.id} player={player} />
-          ))
+          <View style={styles.noGamesContainer}>
+            <Text style={styles.noGamesText}>Aucun match ce jour</Text>
+          </View>
         )}
       </ScrollView>
     </View>
@@ -300,30 +183,43 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1a1a1a',
   },
-  tabContainer: {
+  dateNavigator: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#3a3a3a',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#1a1a1a',
   },
-  tab: {
-    flex: 1,
-    paddingVertical: 16,
+  dateNavButton: {
+    padding: 8,
+  },
+  dateContainer: {
     alignItems: 'center',
   },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#ffffff',
-  },
-  tabText: {
-    color: '#9e9e9e',
-    fontSize: 16,
-  },
-  activeTabText: {
-    color: '#ffffff',
+  dateText: {
+    color: '#FFFFFF',
+    fontSize: 18,
     fontWeight: 'bold',
+    textTransform: 'capitalize',
+  },
+  todayIndicator: {
+    color: '#4CAF50',
+    fontSize: 14,
+    marginTop: 4,
   },
   content: {
     flex: 1,
+  },
+  noGamesContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  noGamesText: {
+    color: '#9e9e9e',
+    fontSize: 16,
   },
   gameCard: {
     backgroundColor: '#2a2a2a',
@@ -342,18 +238,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  statsButton: {
-    backgroundColor: '#4CAF50',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  statsButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   scoreSection: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -366,11 +250,6 @@ const styles = StyleSheet.create({
     height: 50,
     marginBottom: 8,
   },
-  teamLogo: {
-    width: 40,
-    height: 40,
-    marginRight: 12,
-  },
   teamName: {
     color: '#ffffff',
     fontSize: 16,
@@ -378,17 +257,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textAlign: 'center',
   },
-  record: {
-    color: '#9e9e9e',
-    fontSize: 12,
-  },
   score_1: {
     fontSize: 20,
     fontWeight: 'bold',
   },
   score_2: {
     fontSize: 20,
-  fontWeight: 'bold',
+    fontWeight: 'bold',
   },
   scoreLabel: {
     color: '#9e9e9e',
@@ -432,107 +307,13 @@ const styles = StyleSheet.create({
     flex: 1,
     color: '#ffffff',
     fontSize: 14,
+    paddingLeft: 8,
   },
   quarterValue: {
     flex: 1,
     color: '#ffffff',
     fontSize: 14,
     textAlign: 'center',
-  },
-  playerCard: {
-    backgroundColor: '#2a2a2a',
-    borderRadius: 15,
-    marginHorizontal: 16,
-    marginVertical: 8,
-    padding: 16,
-  },
-  playerBasicInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  playerName: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    flex: 1,
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  advancedStatsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    marginVertical: 12,
-  },
-  statItem: {
-    alignItems: 'center',
-    minWidth: 50,
-    marginVertical: 4,
-  },
-  statLabel: {
-    color: '#9e9e9e',
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  statValue: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  statValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  trendIndicator: {
-    marginLeft: 4,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#3a3a3a',
-    marginVertical: 12,
-  },
-  sectionTitle: {
-    color: '#9e9e9e',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  seasonStatsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  expandedCard: {
-    backgroundColor: '#2a2a2a',
-  },
-  quarters: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  quarterItem: {
-    alignItems: 'center',
-  },
-  quarterNumber: {
-    color: '#9e9e9e',
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  quarterScore: {
-    color: '#ffffff',
-    fontSize: 14,
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginLeft: 8,
   },
   expandIndicator: {
     flexDirection: 'row',
@@ -548,53 +329,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginRight: 8,
   },
-  gameCard: {
-    backgroundColor: '#2a2a2a',
-    borderRadius: 15,
-    marginHorizontal: 16,
-    marginVertical: 8,
-    padding: 16,
-    elevation: 3,
-  },
-  expandedCard: {
-    backgroundColor: '#2a2a2a',
-  },
-  quarterScores: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#3a3a3a',
-  },
-  quartersGrid: {
-    backgroundColor: '#222222',
-    borderRadius: 8,
+  statsButton: {
+    backgroundColor: '#4CAF50',
     padding: 12,
+    borderRadius: 8,
+    marginTop: 16,
+    alignItems: 'center',
   },
-  quartersHeader: {
-    flexDirection: 'row',
-    marginBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#3a3a3a',
-    paddingBottom: 8,
+  statsButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  quarterLabel: {
-    flex: 1,
-    color: '#9e9e9e',
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  quarterTeamName: {
-    flex: 1,
-    color: '#ffffff',
-    fontSize: 14,
-    paddingLeft: 8,
-  },
-  quarterValue: {
-    flex: 1,
-    color: '#ffffff',
-    fontSize: 14,
-    textAlign: 'center',
-  }
 });
 
-export default FavoritesScreen;
+export default HomeScreen;
