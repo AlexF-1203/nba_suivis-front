@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setAuthToken } from '../api/api';
+import { registerForPushNotificationsAsync } from '../services/NotificationService';
 
 const AuthContext = createContext();
 
@@ -38,6 +39,8 @@ export const AuthProvider = ({ children }) => {
       setAuthToken(userToken);
       setUser(userData);
       setToken(userToken);
+
+      await registerForPushNotificationsAsync();
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des données d\'auth:', error);
     }

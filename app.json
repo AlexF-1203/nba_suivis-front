@@ -27,6 +27,16 @@
       "navigationBar": {
         "backgroundColor": "#1a1a1a"
       }
-    }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff",
+          "sounds": ["./assets/notification-sound.wav"]
+        }
+      ]
+    ]
   }
 }

@@ -1,10 +1,13 @@
 import React from 'react';
+import { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from './src/context/AuthContext';
+import * as Notifications from 'expo-notifications';
+
 import Login from './src/screens/Login';
 import Signup from './src/screens/Signup';
 import Home from "./src/screens/Home";
@@ -14,6 +17,15 @@ import GameStats from './src/screens/GameStats';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
 
 function TabNavigator() {
   return (
@@ -74,6 +86,29 @@ function TabNavigator() {
 }
 
 export default function App() {
+  useEffect(() => {
+    // Gestion des notifications quand l'app est en premier plan
+    const foregroundSubscription = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification reçue:', notification);
+    });
+
+    // Gestion des notifications quand on clique dessus
+    const backgroundSubscription = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Notification cliquée:', response);
+      const gameId = response.notification.request.content.data.game_id;
+      if (gameId) {
+        // Navigation vers les stats du match
+        navigation.navigate('GameStats', { gameId });
+      }
+    });
+
+    return () => {
+      foregroundSubscription.remove();
+      backgroundSubscription.remove();
+    };
+  }, []);
+
+
   return (
     <>
       <StatusBar style="light" backgroundColor="#000000" />
