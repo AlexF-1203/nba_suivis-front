@@ -22,9 +22,13 @@
       "backgroundColor": "#1a1a1a"
     },
     "ios": {
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"]
+      },
       "supportsTablet": true
     },
     "android": {
+      "permissions": ["NOTIFICATIONS"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1a1a1a"
@@ -39,9 +43,16 @@
         {
           "icon": "./assets/notification-icon.png",
           "color": "#ffffff",
-          "sounds": ["./assets/notification-sound.wav"]
+          "mode": "development"
         }
       ]
-    ]
+    ],
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#ffffff",
+      "androidMode": "default",
+      "androidCollapsedTitle": "NBA Suivis",
+      "iosDisplayInForeground": true
+    }
   }
 }

@@ -1,3 +1,4 @@
+import { useAuth } from './src/context/AuthContext';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -6,7 +7,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from './src/context/AuthContext';
 import * as Notifications from 'expo-notifications';
-import { useAuth } from './src/context/AuthContext';
 
 import Login from './src/screens/Login';
 import Signup from './src/screens/Signup';
@@ -75,7 +75,6 @@ function TabNavigator() {
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
-  console.log('Auth status:', { isAuthenticated });
 
   return (
     <NavigationContainer>
@@ -86,7 +85,8 @@ function AppContent() {
             <Stack.Screen name="Signup" component={Signup} />
           </>
         ) : (
-          <Stack.Screen name="Tabs" component={TabNavigator} />
+          // Important: utiliser TabNavigator directement ici au lieu de "Tabs"
+          <Stack.Screen name="TabNavigator" component={TabNavigator} />
         )}
       </Stack.Navigator>
     </NavigationContainer>

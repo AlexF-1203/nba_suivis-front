@@ -18,11 +18,18 @@ export const setAuthToken = (token) => {
   }
 };
 
-export const login = (email, password) => {
-  const data = { user: { email, password } };
-  console.log('Login data being sent:', data);
-  return api.post('/login', data);
+export const login = async (email, password) => {
+  try {
+    const response = await api.post('/login', {
+      user: { email, password }
+    });
+    return response;
+  } catch (error) {
+    console.error('API Login Error:', error.response?.data || error.message);
+    throw error;
+  }
 };
+
 
 export const signup = (email, password, passwordConfirmation, username) => {
   return api.post('/signup', {
@@ -35,14 +42,15 @@ export const signup = (email, password, passwordConfirmation, username) => {
   });
 };
 
-export const logout = () => {
-  return api.delete('/logout', {
-    headers: {
-      'Authorization': `Bearer ${api.defaults.headers.common['Authorization']}`
-    }
-  });
+export const logout = async () => {
+  try {
+    const response = await api.delete('/logout');
+    return response;
+  } catch (error) {
+    console.error('API Logout Error:', error.response?.data || error.message);
+    throw error;
+  }
 };
-
 export const getTeams = () => {
   return api.get('/teams');
 };
@@ -81,27 +89,29 @@ export const getAvailableDates = () => {
   return api.get('/games/available_dates');
 };
 
-api.interceptors.request.use(config => {
-  // Vérifier si un token est stocké
-  const token = AsyncStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, error => {
-  return Promise.reject(error);
+api.interceptors.request.use(request => {
+  console.log('Request:', {
+    url: request.url,
+    method: request.method,
+    headers: request.headers,
+    data: request.data
+  });
+  return request;
 });
 
 api.interceptors.response.use(
-  response => response,
-  async error => {
-    if (error.response?.status === 401) {
-      // Si on reçoit une 401, on nettoie le storage et on redirige
-      await AsyncStorage.multiRemove(['token', 'user']);
-      setAuthToken(null);
-      // Redirection vers login si possible
-      return Promise.reject(error);
-    }
+  response => {
+    console.log('Response:', {
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
+  error => {
+    console.log('Response Error:', {
+      status: error.response?.status,
+      data: error.response?.data
+    });
     return Promise.reject(error);
   }
 );

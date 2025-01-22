@@ -1,56 +1,74 @@
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 import api from '../api/api';
 
 export const registerForPushNotificationsAsync = async () => {
-  let token;
-
   if (!Device.isDevice) {
-    alert('Les notifications push nécessitent un appareil physique');
-    return;
+    console.log('Push notifications require physical device');
+    return null;
   }
 
   try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
+    console.log('Current notification status:', existingStatus);
 
+    let finalStatus = existingStatus;
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
     }
 
     if (finalStatus !== 'granted') {
-      alert('Impossible d\'obtenir la permission pour les notifications push!');
-      return;
+      console.log('Permission not granted');
+      return null;
     }
 
-    token = (await Notifications.getExpoPushTokenAsync({
-      projectId: Constants.expoConfig.extra?.eas?.projectId,
-    })).data;
+    // Ajoutez une vérification du projectId
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    if (!projectId) {
+      console.error('Project ID is missing or invalid');
+      // Utilisez un ID temporaire pour le développement
+      return "ExponentPushToken[development]";
+    }
 
-    // Enregistrer le token sur le serveur
-    await api.post('/device_tokens', {
-      device_token: {
-        token: token,
-        platform: Platform.OS,
-        active: true
-      }
-    });
-
-    if (Platform.OS === 'android') {
-      Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FF231F7C',
+    try {
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        projectId: projectId
       });
-    }
 
-    return token;
+      console.log('Token obtained:', tokenData);
+
+      // Enregistrez le token sur le serveur
+      const response = await api.post('/device_tokens', {
+        device_token: {
+          token: tokenData.data,
+          platform: Platform.OS,
+          active: true
+        }
+      });
+
+      console.log('Token registered with server:', response.data);
+      return tokenData.data;
+    } catch (tokenError) {
+      console.error('Error getting push token:', tokenError);
+      // Utilisez un token de développement en cas d'erreur
+      return "ExponentPushToken[development]";
+    }
   } catch (error) {
-    console.error('Erreur lors de l\'enregistrement des notifications:', error);
-    throw error;
+    console.error('Error in push notification setup:', error);
+    return null;
+  }
+};
+
+export const verifyDeviceToken = async () => {
+  try {
+    const response = await api.get('/device_tokens/status');
+    return response.data.hasActiveToken;
+  } catch (error) {
+    console.error('Failed to verify device token:', error);
+    return false;
   }
 };
 

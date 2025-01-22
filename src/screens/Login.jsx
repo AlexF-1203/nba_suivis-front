@@ -11,6 +11,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { registerForPushNotificationsAsync } from '../services/NotificationService';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import api, { apiMethods } from '../api/api'; // Importez api et apiMethods
@@ -28,41 +29,21 @@ const Login = ({ navigation }) => {
     setError('');
 
     try {
-      // Vérifions le contenu du storage avant la connexion
-      const existingToken = await AsyncStorage.getItem('token');
-      console.log('Existing token before login:', existingToken);
-
-      // Nettoyage forcé
-      await AsyncStorage.clear();
-      delete api.defaults.headers.common['Authorization'];
-      console.log('Storage cleared');
-
+      // Connexion
       const response = await api.post('/login', {
         user: { email, password }
       });
-
-      console.log('Login API Response:', response.data);
+      console.log('Login successful');
 
       const { token, user } = response.data.data;
-
-      // Vérifions ce qu'on va sauvegarder
-      console.log('About to save:', { token, user });
-
-      await AsyncStorage.setItem('token', token);
-      await AsyncStorage.setItem('user', JSON.stringify(user));
-
-      // Vérifions ce qui a été sauvegardé
-      const savedToken = await AsyncStorage.getItem('token');
-      const savedUser = await AsyncStorage.getItem('user');
-      console.log('Saved in storage:', { savedToken, savedUser });
-
-      // Mise à jour du header
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
       await authLogin(user, token);
 
-      // Changeons la navigation pour correspondre au nom de la route
-      navigation.replace('Tabs');
+      // Enregistrement explicite du token push
+      console.log('Registering push token...');
+      const pushToken = await registerForPushNotificationsAsync();
+      console.log('Push token registration completed:', pushToken);
+
+      navigation.replace('TabNavigator');
     } catch (error) {
       console.error('Login error:', error);
       setError(error?.response?.data?.message || 'Erreur de connexion');

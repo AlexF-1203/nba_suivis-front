@@ -16,82 +16,68 @@ const AuthContext = createContext({
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadStoredAuth = async () => {
-      try {
-        const storedToken = await AsyncStorage.getItem('token');
-        console.log('Loading stored token:', storedToken);
-
-        if (storedToken) {
-          const storedUser = await AsyncStorage.getItem('user');
-          console.log('Loading stored user:', storedUser);
-
-          if (storedUser) {
-            const parsedUser = JSON.parse(storedUser);
-            setToken(storedToken);
-            setUser(parsedUser);
-            api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-          }
-        }
-      } catch (error) {
-        console.error('Auth loading error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadStoredAuth();
-  }, []);
-  
   const login = async (userData, userToken) => {
     try {
-      // Nettoyons d'abord
+      // Nettoyage complet avant la connexion
       await AsyncStorage.multiRemove(['token', 'user']);
       delete api.defaults.headers.common['Authorization'];
 
-      // Puis configurons le nouveau token
+      // Définir le nouveau token pour Axios
       api.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
 
-      // Sauvegardons les nouvelles données
+      // Sauvegarder les nouvelles données
       await AsyncStorage.setItem('token', userToken);
       await AsyncStorage.setItem('user', JSON.stringify(userData));
 
+      try {
+        await registerForPushNotificationsAsync();
+      } catch (notifError) {
+        console.warn('Notification registration error:', notifError);
+        // Ne pas bloquer la connexion si l'enregistrement des notifications échoue
+      }
+      
       setUser(userData);
       setToken(userToken);
     } catch (error) {
       console.error('Erreur login:', error);
       throw error;
     }
+
   };
 
   const logout = async () => {
     try {
+      // Appeler l'API de déconnexion d'abord
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        await api.delete('/logout');
+      }
+
+      // Nettoyer localement
       await AsyncStorage.multiRemove(['token', 'user']);
       delete api.defaults.headers.common['Authorization'];
       setUser(null);
       setToken(null);
     } catch (error) {
       console.error('Erreur logout:', error);
+      // Nettoyer quand même en cas d'erreur
+      await AsyncStorage.multiRemove(['token', 'user']);
+      delete api.defaults.headers.common['Authorization'];
+      setUser(null);
+      setToken(null);
     }
   };
 
-  // Retournez un composant de chargement ou null pendant le chargement initial
-  if (loading) {
-    return null; // Ou un composant de chargement personnalisé
-  }
-
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        login,
-        logout,
-        isAuthenticated: !!token
-      }}
-    >
+    <AuthContext.Provider value={{
+      user,
+      token,
+      login,
+      logout,
+      isAuthenticated: !!token
+    }}>
       {children}
     </AuthContext.Provider>
   );
