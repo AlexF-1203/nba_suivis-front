@@ -17,7 +17,7 @@ export const setAuthToken = (token) => {
     delete api.defaults.headers.common['Authorization'];
   }
 };
-
+  
 export const login = (email, password) => {
   const data = { user: { email, password } };
   console.log('Login data being sent:', data);

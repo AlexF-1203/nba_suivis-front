@@ -4,7 +4,14 @@ import { setAuthToken } from '../api/api';
 import api from '../api/api';
 import { registerForPushNotificationsAsync } from '../services/NotificationService';
 
-const AuthContext = createContext();
+const AuthContext = createContext({
+  // Valeurs par défaut
+  user: null,
+  token: null,
+  login: () => {},
+  logout: () => {},
+  isAuthenticated: false,
+});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -12,15 +19,15 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Vérifier le token stocké au démarrage
     const loadStoredAuth = async () => {
       try {
         const storedToken = await AsyncStorage.getItem('token');
         const storedUser = await AsyncStorage.getItem('user');
 
         if (storedToken && storedUser) {
+          const parsedUser = JSON.parse(storedUser);
           setToken(storedToken);
-          setUser(JSON.parse(storedUser));
+          setUser(parsedUser);
           setAuthToken(storedToken);
         }
       } catch (error) {
@@ -33,11 +40,17 @@ export const AuthProvider = ({ children }) => {
     loadStoredAuth();
   }, []);
 
+  // Modification ici pour garantir la méthode de login
   const login = async (userData, userToken) => {
     try {
+      // Vérifiez que le token et les données utilisateur ne sont pas undefined
+      if (!userToken || !userData) {
+        throw new Error('Token ou données utilisateur manquants');
+      }
+
       // Stocker les données de manière atomique
       await Promise.all([
-        AsyncStorage.setItem('token', userToken),
+        AsyncStorage.setItem('token', userToken || ''),
         AsyncStorage.setItem('user', JSON.stringify(userData))
       ]);
 
@@ -51,16 +64,15 @@ export const AuthProvider = ({ children }) => {
         await registerForPushNotificationsAsync();
       } catch (notifError) {
         console.warn('Erreur lors de l\'enregistrement des notifications:', notifError);
-        // Ne pas bloquer la connexion si les notifications échouent
       }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des données d\'auth:', error);
-      throw error; // Relancer l'erreur pour permettre une gestion côté appelant
+      throw error;
     }
   };
+
   const logout = async () => {
     try {
-      await api.logout();
       await AsyncStorage.multiRemove(['token', 'user']);
       setAuthToken(null);
       setUser(null);
@@ -70,12 +82,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Retournez un composant de chargement ou null pendant le chargement initial
   if (loading) {
-    return null; // Ou un composant de chargement
+    return null; // Ou un composant de chargement personnalisé
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        login,
+        logout,
+        isAuthenticated: !!token
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

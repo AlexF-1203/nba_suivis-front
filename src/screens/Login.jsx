@@ -12,45 +12,55 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { login } from '../api/api';
-import api from '../api/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import api, { apiMethods } from '../api/api'; // Importez api et apiMethods
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const { login: authLogin } = useAuth();
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const { login: authLogin } = useAuth();
 
+  const handleLogin = async () => {
+    setLoading(true);
+    setError('');
 
-    const handleLogin = async () => {
-      setLoading(true);
-      setError('');
-
-      try {
-        const response = await api.login(email, password);
-        const { token, user } = response.data;
-        await authLogin(user, token);
-        navigation.replace('MainApp');
-      } catch (error) {
-        console.error('Erreur de connexion:', error);
-
-        // Gestion différente des erreurs
-        if (error.response) {
-          // Le serveur a répondu avec un statut d'erreur
-          setError(error.response.data.message || 'Erreur de connexion');
-        } else if (error.request) {
-          // La requête a été faite mais pas de réponse
-          setError('Pas de réponse du serveur');
-        } else {
-          // Quelque chose s'est passé lors de la configuration de la requête
-          setError('Erreur lors de la connexion');
+    try {
+      const response = await api.post('/login', {
+        user: {
+          email,
+          password
         }
-      } finally {
-        setLoading(false);
+      });
+
+      // Assurez-vous que le token est bien défini
+      const token = response.data.token;
+      const user = response.data.user;
+
+      if (!token) {
+        throw new Error('Aucun token reçu');
       }
-    };
+
+      // Utilisez authLogin du contexte en vérifiant les valeurs
+      await authLogin(user, token);
+
+      navigation.replace('MainApp');
+    } catch (error) {
+      console.error('Erreur de connexion:', error);
+
+      if (error.response) {
+        setError(error.response.data.message || 'Erreur de connexion');
+      } else if (error.request) {
+        setError('Pas de réponse du serveur');
+      } else {
+        setError('Erreur lors de la connexion');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
