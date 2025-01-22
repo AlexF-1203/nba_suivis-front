@@ -48,25 +48,12 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Supprimer le token côté serveur
-      await api.delete('/logout');
-
-      // Nettoyer AsyncStorage
+      await api.logout();
       await AsyncStorage.multiRemove(['token', 'user']);
-
-      // Réinitialiser l'état
       setAuthToken(null);
       setUser(null);
       setToken(null);
-
-      // Réinitialiser les headers d'API
-      api.defaults.headers.common['Authorization'] = null;
-
-      // Force la navigation vers Login
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      });
+      delete api.defaults.headers.common['Authorization'];
     } catch (error) {
       console.error('Erreur logout:', error);
     }

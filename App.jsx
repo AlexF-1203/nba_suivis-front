@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from './src/context/AuthContext';
 import * as Notifications from 'expo-notifications';
+import { useAuth } from './src/context/AuthContext';
 
 import Login from './src/screens/Login';
 import Signup from './src/screens/Signup';
@@ -86,6 +87,7 @@ function TabNavigator() {
 }
 
 export default function App() {
+  const { isAuthenticated } = useAuth();
   useEffect(() => {
     // Gestion des notifications quand l'app est en premier plan
     const foregroundSubscription = Notifications.addNotificationReceivedListener(notification => {
@@ -112,16 +114,16 @@ export default function App() {
   return (
     <>
       <StatusBar style="light" backgroundColor="#000000" />
-      <NavigationContainer>
-        <AuthProvider>
+      <AuthProvider>
+        <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="MainApp" component={TabNavigator} />
             <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="Signup" component={Signup} />
             <Stack.Screen name="GameStats" component={GameStats} />
           </Stack.Navigator>
-        </AuthProvider>
-      </NavigationContainer>
+        </NavigationContainer>
+      </AuthProvider>
     </>
   );
 }

@@ -13,6 +13,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { login } from '../api/api';
+import api from '../api/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -20,27 +22,17 @@ const Login = ({ navigation }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login: authLogin } = useAuth();
+  const { login } = useAuth();
 
   const handleLogin = async () => {
     try {
-      await AsyncStorage.multiRemove(['token', 'user']);
-
-      const response = await api.post('/login', {
-        user: {
-          email: email,
-          password: password,
-        }
-      });
-
-      if (response.data.token) {
-        await login(response.data.user, response.data.token);
-      } else {
-        Alert.alert('Erreur', 'Identifiants invalides');
-      }
+      const response = await api.login(email, password);
+      const { token, user } = response.data;
+      await login(user, token);
+      navigation.replace('MainApp');
     } catch (error) {
-      console.error('Erreur login:', error);
-      Alert.alert('Erreur', 'Identifiants invalides');
+      console.error('Erreur de connexion:', error);
+      // Gérer l'erreur (afficher un message, etc.)
     }
   };
 

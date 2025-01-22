@@ -36,7 +36,11 @@ export const signup = (email, password, passwordConfirmation, username) => {
 };
 
 export const logout = () => {
-  return api.delete('/logout');
+  return api.delete('/logout', {
+    headers: {
+      'Authorization': `Bearer ${api.defaults.headers.common['Authorization']}`
+    }
+  });
 };
 
 export const getTeams = () => {
