@@ -1,4 +1,5 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const API_URL = 'https://1d19-88-184-112-195.ngrok-free.app/api/v1';
 
@@ -75,6 +76,27 @@ export const getGames = (date) => {
 export const getAvailableDates = () => {
   return api.get('/games/available_dates');
 };
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      // Token invalide ou expiré
+      await AsyncStorage.multiRemove(['token', 'user']);
+      // Rediriger vers login
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    }
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.request.use(config => {
+  console.log('Request headers:', config.headers);
+  return config;
+});
 
 // Ajoutez d'autres appels API selon vos besoins
 

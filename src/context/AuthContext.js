@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       setToken(userToken);
 
-      await registerForPushNotificationsAsync();
+      await registerForPushNotificationsAsync(); // Appelé ici après la connexion
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des données d\'auth:', error);
     }
@@ -48,13 +48,27 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('user');
+      // Supprimer le token côté serveur
+      await api.delete('/logout');
+
+      // Nettoyer AsyncStorage
+      await AsyncStorage.multiRemove(['token', 'user']);
+
+      // Réinitialiser l'état
       setAuthToken(null);
       setUser(null);
       setToken(null);
+
+      // Réinitialiser les headers d'API
+      api.defaults.headers.common['Authorization'] = null;
+
+      // Force la navigation vers Login
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
     } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
+      console.error('Erreur logout:', error);
     }
   };
 

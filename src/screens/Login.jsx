@@ -23,24 +23,24 @@ const Login = ({ navigation }) => {
   const { login: authLogin } = useAuth();
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      setError('Veuillez remplir tous les champs');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
     try {
-      const response = await login(email, password);
-      if (response.data.data && response.data.data.token) {
-        authLogin(response.data.data.user, response.data.data.token);
-        navigation.replace('MainApp');
+      await AsyncStorage.multiRemove(['token', 'user']);
+
+      const response = await api.post('/login', {
+        user: {
+          email: email,
+          password: password,
+        }
+      });
+
+      if (response.data.token) {
+        await login(response.data.user, response.data.token);
+      } else {
+        Alert.alert('Erreur', 'Identifiants invalides');
       }
-    } catch (err) {
-      setError('Email ou mot de passe incorrect');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Erreur login:', error);
+      Alert.alert('Erreur', 'Identifiants invalides');
     }
   };
 

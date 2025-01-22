@@ -2,6 +2,11 @@
   "expo": {
     "name": "frontend",
     "slug": "frontend",
+    "extra": {
+      "eas": {
+        "projectId": "stats-balls"
+      }
+    },
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

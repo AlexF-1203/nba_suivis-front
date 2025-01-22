@@ -1,30 +1,17 @@
-// src/services/NotificationService.js
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import { Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import api from '../api/api';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
-
-export async function registerForPushNotificationsAsync() {
+export const registerForPushNotificationsAsync = async () => {
   let token;
 
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-    });
+  if (!Device.isDevice) {
+    alert('Les notifications push nécessitent un appareil physique');
+    return;
   }
 
-  if (Device.isDevice) {
+  try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 
@@ -34,28 +21,85 @@ export async function registerForPushNotificationsAsync() {
     }
 
     if (finalStatus !== 'granted') {
-      alert('Les notifications sont nécessaires pour recevoir les mises à jour des matchs.');
+      alert('Impossible d\'obtenir la permission pour les notifications push!');
       return;
     }
 
-    try {
-      const response = await Notifications.getExpoPushTokenAsync({
-        projectId: '9673f0c9-f3bb-4c72-b5c2-7f0ba28a2e07' // Votre Expo project ID
-      });
-      token = response.data;
+    token = (await Notifications.getExpoPushTokenAsync({
+      projectId: Constants.expoConfig.extra?.eas?.projectId,
+    })).data;
 
-      // Enregistrer le token
-      await api.post('/api/v1/device_tokens', {
-        device_token: {
-          token: token,
-          platform: Platform.OS
-        }
+    // Enregistrer le token sur le serveur
+    await api.post('/device_tokens', {
+      device_token: {
+        token: token,
+        platform: Platform.OS,
+        active: true
+      }
+    });
+
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
       });
-      console.log("Token de notification enregistré :", token);
-    } catch (error) {
-      console.error('Erreur lors de l\'enregistrement du token:', error);
     }
-  }
 
-  return token;
-}
+    return token;
+  } catch (error) {
+    console.error('Erreur lors de l\'enregistrement des notifications:', error);
+    throw error;
+  }
+};
+
+export const schedulePushNotification = async (title, body, data = {}) => {
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: title,
+        body: body,
+        data: data,
+      },
+      trigger: null, // Notification immédiate
+    });
+  } catch (error) {
+    console.error('Erreur lors de la programmation de la notification:', error);
+    throw error;
+  }
+};
+
+export const cancelAllScheduledNotifications = async () => {
+  try {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  } catch (error) {
+    console.error('Erreur lors de l\'annulation des notifications:', error);
+    throw error;
+  }
+};
+
+export const getBadgeCount = async () => {
+  try {
+    return await Notifications.getBadgeCountAsync();
+  } catch (error) {
+    console.error('Erreur lors de la récupération du nombre de badges:', error);
+    return 0;
+  }
+};
+
+export const setBadgeCount = async (count) => {
+  try {
+    await Notifications.setBadgeCountAsync(count);
+  } catch (error) {
+    console.error('Erreur lors de la définition du nombre de badges:', error);
+  }
+};
+
+export default {
+  registerForPushNotificationsAsync,
+  schedulePushNotification,
+  cancelAllScheduledNotifications,
+  getBadgeCount,
+  setBadgeCount
+};

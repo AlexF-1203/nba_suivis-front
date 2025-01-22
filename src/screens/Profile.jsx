@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import api from '../api/api';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, logout } = useAuth();
@@ -62,6 +63,17 @@ const ProfileScreen = ({ navigation }) => {
     </TouchableOpacity>
   );
 
+  const testNotification = async () => {
+    try {
+      const response = await api.post('/test_notification');
+      console.log('Test notification response:', response.data);
+      Alert.alert('Succès', 'Notification de test envoyée');
+    } catch (error) {
+      console.error('Test notification error:', error.response?.data || error);
+      Alert.alert('Erreur', "Échec de l'envoi de la notification de test");
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -118,6 +130,12 @@ const ProfileScreen = ({ navigation }) => {
           label="Contactez-nous"
           onPress={() => {}}
         />
+        <MenuButton
+          icon="notifications-outline"
+          label="Test Notification"
+          onPress={testNotification}
+        />
+
 
         <MenuButton
           icon="log-out-outline"
