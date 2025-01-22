@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setAuthToken } from '../api/api';
+import api from '../api/api';
 import { registerForPushNotificationsAsync } from '../services/NotificationService';
 
 const AuthContext = createContext();
@@ -34,18 +35,29 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (userData, userToken) => {
     try {
-      await AsyncStorage.setItem('token', userToken);
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      // Stocker les données de manière atomique
+      await Promise.all([
+        AsyncStorage.setItem('token', userToken),
+        AsyncStorage.setItem('user', JSON.stringify(userData))
+      ]);
+
+      // Mettre à jour l'état
       setAuthToken(userToken);
       setUser(userData);
       setToken(userToken);
 
-      await registerForPushNotificationsAsync(); // Appelé ici après la connexion
+      // Enregistrer les notifications (avec gestion d'erreur)
+      try {
+        await registerForPushNotificationsAsync();
+      } catch (notifError) {
+        console.warn('Erreur lors de l\'enregistrement des notifications:', notifError);
+        // Ne pas bloquer la connexion si les notifications échouent
+      }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des données d\'auth:', error);
+      throw error; // Relancer l'erreur pour permettre une gestion côté appelant
     }
   };
-
   const logout = async () => {
     try {
       await api.logout();
@@ -53,7 +65,6 @@ export const AuthProvider = ({ children }) => {
       setAuthToken(null);
       setUser(null);
       setToken(null);
-      delete api.defaults.headers.common['Authorization'];
     } catch (error) {
       console.error('Erreur logout:', error);
     }

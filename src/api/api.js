@@ -86,12 +86,18 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       // Token invalide ou expiré
-      await AsyncStorage.multiRemove(['token', 'user']);
-      // Rediriger vers login
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      });
+      try {
+        await AsyncStorage.multiRemove(['token', 'user']);
+        // Vérifiez que 'navigation' est disponible
+        if (navigation) {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          });
+        }
+      } catch (storageError) {
+        console.error('Erreur lors de la suppression des données de connexion:', storageError);
+      }
     }
     return Promise.reject(error);
   }

@@ -18,24 +18,39 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const { login: authLogin } = useAuth();
 
-  const handleLogin = async () => {
-    try {
-      const response = await api.login(email, password);
-      const { token, user } = response.data;
-      await login(user, token);
-      navigation.replace('MainApp');
-    } catch (error) {
-      console.error('Erreur de connexion:', error);
-      // Gérer l'erreur (afficher un message, etc.)
-    }
-  };
 
+    const handleLogin = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const response = await api.login(email, password);
+        const { token, user } = response.data;
+        await authLogin(user, token);
+        navigation.replace('MainApp');
+      } catch (error) {
+        console.error('Erreur de connexion:', error);
+
+        // Gestion différente des erreurs
+        if (error.response) {
+          // Le serveur a répondu avec un statut d'erreur
+          setError(error.response.data.message || 'Erreur de connexion');
+        } else if (error.request) {
+          // La requête a été faite mais pas de réponse
+          setError('Pas de réponse du serveur');
+        } else {
+          // Quelque chose s'est passé lors de la configuration de la requête
+          setError('Erreur lors de la connexion');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
