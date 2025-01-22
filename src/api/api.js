@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const API_URL = 'https://1d19-88-184-112-195.ngrok-free.app/api/v1';
+export const API_URL = 'https://a719-88-184-112-195.ngrok-free.app/api/v1';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -17,7 +17,7 @@ export const setAuthToken = (token) => {
     delete api.defaults.headers.common['Authorization'];
   }
 };
-  
+
 export const login = (email, password) => {
   const data = { user: { email, password } };
   console.log('Login data being sent:', data);
@@ -81,32 +81,30 @@ export const getAvailableDates = () => {
   return api.get('/games/available_dates');
 };
 
+api.interceptors.request.use(config => {
+  // Vérifier si un token est stocké
+  const token = AsyncStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, error => {
+  return Promise.reject(error);
+});
+
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  response => response,
+  async error => {
     if (error.response?.status === 401) {
-      // Token invalide ou expiré
-      try {
-        await AsyncStorage.multiRemove(['token', 'user']);
-        // Vérifiez que 'navigation' est disponible
-        if (navigation) {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'Login' }],
-          });
-        }
-      } catch (storageError) {
-        console.error('Erreur lors de la suppression des données de connexion:', storageError);
-      }
+      // Si on reçoit une 401, on nettoie le storage et on redirige
+      await AsyncStorage.multiRemove(['token', 'user']);
+      setAuthToken(null);
+      // Redirection vers login si possible
+      return Promise.reject(error);
     }
     return Promise.reject(error);
   }
 );
-
-api.interceptors.request.use(config => {
-  console.log('Request headers:', config.headers);
-  return config;
-});
 
 // Ajoutez d'autres appels API selon vos besoins
 

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from './src/context/AuthContext';
 import * as Notifications from 'expo-notifications';
+import { useAuth } from './src/context/AuthContext';
 
 import Login from './src/screens/Login';
 import Signup from './src/screens/Signup';
@@ -73,13 +74,20 @@ function TabNavigator() {
 }
 
 function AppContent() {
+  const { isAuthenticated } = useAuth();
+  console.log('Auth status:', { isAuthenticated });
+
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="MainApp" component={TabNavigator} />
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="Signup" component={Signup} />
-        <Stack.Screen name="GameStats" component={GameStats} />
+        {!isAuthenticated ? (
+          <>
+            <Stack.Screen name="Login" component={Login} />
+            <Stack.Screen name="Signup" component={Signup} />
+          </>
+        ) : (
+          <Stack.Screen name="Tabs" component={TabNavigator} />
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

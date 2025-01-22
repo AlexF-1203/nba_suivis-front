@@ -22,16 +22,21 @@ export const AuthProvider = ({ children }) => {
     const loadStoredAuth = async () => {
       try {
         const storedToken = await AsyncStorage.getItem('token');
-        const storedUser = await AsyncStorage.getItem('user');
+        console.log('Loading stored token:', storedToken);
 
-        if (storedToken && storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          setToken(storedToken);
-          setUser(parsedUser);
-          setAuthToken(storedToken);
+        if (storedToken) {
+          const storedUser = await AsyncStorage.getItem('user');
+          console.log('Loading stored user:', storedUser);
+
+          if (storedUser) {
+            const parsedUser = JSON.parse(storedUser);
+            setToken(storedToken);
+            setUser(parsedUser);
+            api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+          }
         }
       } catch (error) {
-        console.error('Erreur lors du chargement des données d\'auth:', error);
+        console.error('Auth loading error:', error);
       } finally {
         setLoading(false);
       }
@@ -39,34 +44,24 @@ export const AuthProvider = ({ children }) => {
 
     loadStoredAuth();
   }, []);
-
-  // Modification ici pour garantir la méthode de login
+  
   const login = async (userData, userToken) => {
     try {
-      // Vérifiez que le token et les données utilisateur ne sont pas undefined
-      if (!userToken || !userData) {
-        throw new Error('Token ou données utilisateur manquants');
-      }
+      // Nettoyons d'abord
+      await AsyncStorage.multiRemove(['token', 'user']);
+      delete api.defaults.headers.common['Authorization'];
 
-      // Stocker les données de manière atomique
-      await Promise.all([
-        AsyncStorage.setItem('token', userToken || ''),
-        AsyncStorage.setItem('user', JSON.stringify(userData))
-      ]);
+      // Puis configurons le nouveau token
+      api.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
 
-      // Mettre à jour l'état
-      setAuthToken(userToken);
+      // Sauvegardons les nouvelles données
+      await AsyncStorage.setItem('token', userToken);
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+
       setUser(userData);
       setToken(userToken);
-
-      // Enregistrer les notifications (avec gestion d'erreur)
-      try {
-        await registerForPushNotificationsAsync();
-      } catch (notifError) {
-        console.warn('Erreur lors de l\'enregistrement des notifications:', notifError);
-      }
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde des données d\'auth:', error);
+      console.error('Erreur login:', error);
       throw error;
     }
   };
@@ -74,7 +69,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await AsyncStorage.multiRemove(['token', 'user']);
-      setAuthToken(null);
+      delete api.defaults.headers.common['Authorization'];
       setUser(null);
       setToken(null);
     } catch (error) {

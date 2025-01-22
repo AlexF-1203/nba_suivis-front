@@ -7,7 +7,7 @@ import api from '../api/api';
 const ProfileScreen = ({ navigation }) => {
   const { user, logout } = useAuth();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert(
       'Déconnexion',
       'Êtes-vous sûr de vouloir vous déconnecter ?',
@@ -18,14 +18,39 @@ const ProfileScreen = ({ navigation }) => {
         },
         {
           text: 'Déconnexion',
-          onPress: () => {
-            logout();
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Login' }]
-            });
-          },
-          style: 'destructive'
+          onPress: async () => {
+            try {
+              // Vérifions l'état avant la déconnexion
+              const tokenBefore = await AsyncStorage.getItem('token');
+              console.log('Token before logout:', tokenBefore);
+
+              // Nettoyage complet
+              await AsyncStorage.clear();
+              delete api.defaults.headers.common['Authorization'];
+              await logout();
+
+              // Vérifions l'état après la déconnexion
+              const tokenAfter = await AsyncStorage.getItem('token');
+              console.log('Token after logout:', tokenAfter);
+
+              // Faisons l'appel API en dernier
+              try {
+                const response = await api.delete('/logout');
+                console.log('Logout API response:', response.data);
+              } catch (apiError) {
+                console.log('API logout error:', apiError);
+              }
+
+              // Navigation
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }]
+              });
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Erreur', 'Une erreur est survenue lors de la déconnexion');
+            }
+          }
         }
       ]
     );

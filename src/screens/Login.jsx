@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   ActivityIndicator
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import api, { apiMethods } from '../api/api'; // Importez api et apiMethods
@@ -27,35 +28,44 @@ const Login = ({ navigation }) => {
     setError('');
 
     try {
+      // Vérifions le contenu du storage avant la connexion
+      const existingToken = await AsyncStorage.getItem('token');
+      console.log('Existing token before login:', existingToken);
+
+      // Nettoyage forcé
+      await AsyncStorage.clear();
+      delete api.defaults.headers.common['Authorization'];
+      console.log('Storage cleared');
+
       const response = await api.post('/login', {
-        user: {
-          email,
-          password
-        }
+        user: { email, password }
       });
 
-      // Assurez-vous que le token est bien défini
-      const token = response.data.token;
-      const user = response.data.user;
+      console.log('Login API Response:', response.data);
 
-      if (!token) {
-        throw new Error('Aucun token reçu');
-      }
+      const { token, user } = response.data.data;
 
-      // Utilisez authLogin du contexte en vérifiant les valeurs
+      // Vérifions ce qu'on va sauvegarder
+      console.log('About to save:', { token, user });
+
+      await AsyncStorage.setItem('token', token);
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+
+      // Vérifions ce qui a été sauvegardé
+      const savedToken = await AsyncStorage.getItem('token');
+      const savedUser = await AsyncStorage.getItem('user');
+      console.log('Saved in storage:', { savedToken, savedUser });
+
+      // Mise à jour du header
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
       await authLogin(user, token);
 
-      navigation.replace('MainApp');
+      // Changeons la navigation pour correspondre au nom de la route
+      navigation.replace('Tabs');
     } catch (error) {
-      console.error('Erreur de connexion:', error);
-
-      if (error.response) {
-        setError(error.response.data.message || 'Erreur de connexion');
-      } else if (error.request) {
-        setError('Pas de réponse du serveur');
-      } else {
-        setError('Erreur lors de la connexion');
-      }
+      console.error('Login error:', error);
+      setError(error?.response?.data?.message || 'Erreur de connexion');
     } finally {
       setLoading(false);
     }
