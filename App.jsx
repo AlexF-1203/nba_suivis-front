@@ -12,7 +12,7 @@ import Login from './src/screens/Login';
 import Signup from './src/screens/Signup';
 import Home from "./src/screens/Home";
 import Profile from './src/screens/Profile.jsx';
-// import GameStats from './src/screens/GameStats';
+import GameStats from './src/screens/GameStats';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -87,6 +87,7 @@ function AppContent() {
         ) : (
           <Stack.Screen name="TabNavigator" component={TabNavigator} />
         )}
+        <Stack.Screen name="GameStats" component={GameStats} />
       </Stack.Navigator>
     </NavigationContainer>
   );
