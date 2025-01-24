@@ -1,10 +1,10 @@
 {
   "expo": {
     "name": "frontend",
-    "slug": "frontend",
+    "slug": "stats-ball",
     "extra": {
       "eas": {
-        "projectId": "stats-balls"
+        "projectId": "47a6ca05-38ea-4562-9d2e-88373164c8dc"
       }
     },
     "version": "1.0.0",
@@ -23,12 +23,16 @@
     },
     "ios": {
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       },
       "supportsTablet": true
     },
     "android": {
-      "permissions": ["NOTIFICATIONS"],
+      "permissions": [
+        "NOTIFICATIONS"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1a1a1a"
@@ -53,6 +57,7 @@
       "androidMode": "default",
       "androidCollapsedTitle": "NBA Suivis",
       "iosDisplayInForeground": true
-    }
+    },
+    "owner": "ginn1203"
   }
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { sendTestNotification } from '../services/NotificationService';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/api';
 
@@ -100,6 +101,16 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
+  const handleTestNotification = async () => {
+    try {
+      await sendTestNotification();
+      Alert.alert("Succès", "Notification de test envoyée");
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de la notification de test:", error);
+      Alert.alert("Erreur", "Échec de l'envoi de la notification de test");
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -160,6 +171,11 @@ const ProfileScreen = ({ navigation }) => {
           icon="notifications-outline"
           label="Test Notification"
           onPress={testNotification}
+        />
+        <MenuButton
+          icon="notifications-outline"
+          label="Tester Notification"
+          onPress={handleTestNotification}
         />
 
 

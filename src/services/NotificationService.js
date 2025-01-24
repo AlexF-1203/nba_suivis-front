@@ -25,37 +25,30 @@ export const registerForPushNotificationsAsync = async () => {
       return null;
     }
 
-    // Ajoutez une vérification du projectId
+    // Utilisez l'ID du projet directement depuis Constants.expoConfig
     const projectId = Constants.expoConfig?.extra?.eas?.projectId;
     if (!projectId) {
       console.error('Project ID is missing or invalid');
-      // Utilisez un ID temporaire pour le développement
-      return "ExponentPushToken[development]";
+      return null;
     }
 
-    try {
-      const tokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: projectId
-      });
+    const tokenData = await Notifications.getExpoPushTokenAsync({
+      projectId: projectId
+    });
 
-      console.log('Token obtained:', tokenData);
+    console.log('Token obtained:', tokenData);
 
-      // Enregistrez le token sur le serveur
-      const response = await api.post('/device_tokens', {
-        device_token: {
-          token: tokenData.data,
-          platform: Platform.OS,
-          active: true
-        }
-      });
+    // Enregistrez le token sur le serveur
+    const response = await api.post('/device_tokens', {
+      device_token: {
+        token: tokenData.data,
+        platform: Platform.OS,
+        active: true
+      }
+    });
 
-      console.log('Token registered with server:', response.data);
-      return tokenData.data;
-    } catch (tokenError) {
-      console.error('Error getting push token:', tokenError);
-      // Utilisez un token de développement en cas d'erreur
-      return "ExponentPushToken[development]";
-    }
+    console.log('Token registered with server:', response.data);
+    return tokenData.data;
   } catch (error) {
     console.error('Error in push notification setup:', error);
     return null;
@@ -111,6 +104,19 @@ export const setBadgeCount = async (count) => {
     await Notifications.setBadgeCountAsync(count);
   } catch (error) {
     console.error('Erreur lors de la définition du nombre de badges:', error);
+  }
+};
+
+export const sendTestNotification = async () => {
+  try {
+    await schedulePushNotification(
+      "Notification de test",
+      "Ceci est un message de test pour les notifications push",
+      { data: 'Test data' }
+    );
+    console.log("Notification de test envoyée");
+  } catch (error) {
+    console.error("Erreur lors de l'envoi de la notification de test:", error);
   }
 };
 
