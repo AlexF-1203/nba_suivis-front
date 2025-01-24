@@ -39,7 +39,8 @@
       },
       "navigationBar": {
         "backgroundColor": "#1a1a1a"
-      }
+      },
+      "package": "com.ginn1203.statsball"
     },
     "plugins": [
       [

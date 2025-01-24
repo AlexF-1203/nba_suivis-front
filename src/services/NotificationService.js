@@ -1,8 +1,17 @@
+// src/services/NotificationService.js
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import api from '../api/api';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 export const registerForPushNotificationsAsync = async () => {
   if (!Device.isDevice) {
@@ -12,118 +21,61 @@ export const registerForPushNotificationsAsync = async () => {
 
   try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    console.log('Current notification status:', existingStatus);
-
     let finalStatus = existingStatus;
+
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
     }
 
     if (finalStatus !== 'granted') {
-      console.log('Permission not granted');
+      console.log('Failed to get push token: permission not granted');
       return null;
     }
 
-    // Utilisez l'ID du projet directement depuis Constants.expoConfig
-    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-    if (!projectId) {
-      console.error('Project ID is missing or invalid');
-      return null;
-    }
-
-    const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: projectId
+    const expoPushToken = await Notifications.getExpoPushTokenAsync({
+      projectId: Constants.expoConfig.extra.eas.projectId
     });
 
-    console.log('Token obtained:', tokenData);
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    }
 
-    // Enregistrez le token sur le serveur
-    const response = await api.post('/device_tokens', {
+    await api.post('/device_tokens', {
       device_token: {
-        token: tokenData.data,
+        token: expoPushToken.data,
         platform: Platform.OS,
         active: true
       }
     });
 
-    console.log('Token registered with server:', response.data);
-    return tokenData.data;
+    return expoPushToken.data;
   } catch (error) {
-    console.error('Error in push notification setup:', error);
-    return null;
-  }
-};
-
-export const verifyDeviceToken = async () => {
-  try {
-    const response = await api.get('/device_tokens/status');
-    return response.data.hasActiveToken;
-  } catch (error) {
-    console.error('Failed to verify device token:', error);
-    return false;
-  }
-};
-
-export const schedulePushNotification = async (title, body, data = {}) => {
-  try {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: title,
-        body: body,
-        data: data,
-      },
-      trigger: null, // Notification immédiate
-    });
-  } catch (error) {
-    console.error('Erreur lors de la programmation de la notification:', error);
+    console.error('Error registering for push notifications:', error);
     throw error;
   }
-};
+}
 
-export const cancelAllScheduledNotifications = async () => {
-  try {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-  } catch (error) {
-    console.error('Erreur lors de l\'annulation des notifications:', error);
-    throw error;
-  }
-};
+export const setupNotificationListener = (navigation) => {
+  const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+    console.log('Received notification:', notification);
+  });
 
-export const getBadgeCount = async () => {
-  try {
-    return await Notifications.getBadgeCountAsync();
-  } catch (error) {
-    console.error('Erreur lors de la récupération du nombre de badges:', error);
-    return 0;
-  }
-};
+  const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+    const data = response.notification.request.content.data;
 
-export const setBadgeCount = async (count) => {
-  try {
-    await Notifications.setBadgeCountAsync(count);
-  } catch (error) {
-    console.error('Erreur lors de la définition du nombre de badges:', error);
-  }
-};
+    if (data.type === 'game_finished' && data.game_id) {
+      navigation.navigate('GameStats', { gameId: data.game_id });
+    }
+  });
 
-export const sendTestNotification = async () => {
-  try {
-    await schedulePushNotification(
-      "Notification de test",
-      "Ceci est un message de test pour les notifications push",
-      { data: 'Test data' }
-    );
-    console.log("Notification de test envoyée");
-  } catch (error) {
-    console.error("Erreur lors de l'envoi de la notification de test:", error);
-  }
-};
-
-export default {
-  registerForPushNotificationsAsync,
-  schedulePushNotification,
-  cancelAllScheduledNotifications,
-  getBadgeCount,
-  setBadgeCount
+  return () => {
+    Notifications.removeNotificationSubscription(notificationListener);
+    Notifications.removeNotificationSubscription(responseListener);
+  };
 };
