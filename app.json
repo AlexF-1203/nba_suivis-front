@@ -3,6 +3,8 @@
     "name": "frontend",
     "slug": "stats-ball",
     "extra": {
+      "firebaseApiKey": "AIzaSyCiH2KoZ7U3a18Ak3jWKpigOF4AGJiMWYA",
+      "firebaseAppId": "1:816198453182:web:12345abcde",
       "eas": {
         "projectId": "47a6ca05-38ea-4562-9d2e-88373164c8dc"
       }

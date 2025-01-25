@@ -13,6 +13,22 @@ Notifications.setNotificationHandler({
   }),
 });
 
+export async function schedulePushNotification({ title, body, data }) {
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data: data || {}
+      },
+      trigger: null // Send immediately
+    });
+  } catch (error) {
+    console.error('Error scheduling notification:', error);
+    throw error;
+  }
+}
+
 export const registerForPushNotificationsAsync = async () => {
   if (!Device.isDevice) {
     console.log('Push notifications require physical device');
@@ -60,6 +76,19 @@ export const registerForPushNotificationsAsync = async () => {
     throw error;
   }
 }
+
+export const sendTestNotification = async () => {
+  try {
+    await schedulePushNotification(
+      "Notification de test",
+      "Ceci est un message de test pour les notifications push",
+      { data: 'Test data' }
+    );
+    console.log("Notification de test envoyée");
+  } catch (error) {
+    console.error("Erreur lors de l'envoi de la notification de test:", error);
+  }
+};
 
 export const setupNotificationListener = (navigation) => {
   const notificationListener = Notifications.addNotificationReceivedListener(notification => {

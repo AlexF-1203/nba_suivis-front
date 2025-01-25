@@ -9,7 +9,8 @@ import { AuthProvider } from './src/context/AuthContext';
 import * as Notifications from 'expo-notifications';
 import { setupNotificationListener } from './src/services/NotificationService';
 import { initializeApp } from 'firebase/app';
-
+import { getMessaging } from 'firebase/messaging';
+import Constants from 'expo-constants';
 
 import Login from './src/screens/Login';
 import Signup from './src/screens/Signup';
@@ -18,15 +19,16 @@ import Profile from './src/screens/Profile.jsx';
 import GameStats from './src/screens/GameStats';
 
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID
+  apiKey: Constants.expoConfig?.extra?.firebaseApiKey,
+  authDomain: "stats-balls.firebaseapp.com",
+  projectId: "stats-balls",
+  storageBucket: "stats-balls.appspot.com",
+  messagingSenderId: "816198453182",
+  appId: Constants.expoConfig?.extra?.firebaseAppId
 };
 
 const app = initializeApp(firebaseConfig);
+// const messaging = getMessaging(app);
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -43,13 +45,10 @@ function NotificationHandler() {
  const navigation = useNavigation();
 
  useEffect(() => {
-  if (!app) {
-    console.error('Firebase not initialized');
-    return;
-  }
-  const cleanup = setupNotificationListener(navigation);
-  return () => cleanup(); // Retourne la fonction de cleanup
-}, []);
+   return setupNotificationListener(navigation);
+ }, [navigation]);
+
+ return null;
 }
 
 function TabNavigator() {
@@ -101,30 +100,30 @@ function TabNavigator() {
 }
 
 function AppContent() {
- const { isAuthenticated } = useAuth();
- useEffect(() => {
-  if (!app) {
-    console.error('Firebase not initialized');
-    return;
-  }
+  const { isAuthenticated } = useAuth();
 
- return (
-   <NavigationContainer>
-     <NotificationHandler />
-     <Stack.Navigator screenOptions={{ headerShown: false }}>
-       {!isAuthenticated ? (
-         <>
-           <Stack.Screen name="Login" component={Login} />
-           <Stack.Screen name="Signup" component={Signup} />
-         </>
-       ) : (
-         <Stack.Screen name="TabNavigator" component={TabNavigator} />
-       )}
-       <Stack.Screen name="GameStats" component={GameStats} />
-     </Stack.Navigator>
-   </NavigationContainer>
- );
-}, []);
+  useEffect(() => {
+    if (!app) {
+      console.error('Firebase not initialized');
+    }
+  }, []);
+
+  return (
+    <NavigationContainer>
+      <NotificationHandler />
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!isAuthenticated ? (
+          <>
+            <Stack.Screen name="Login" component={Login} />
+            <Stack.Screen name="Signup" component={Signup} />
+          </>
+        ) : (
+          <Stack.Screen name="TabNavigator" component={TabNavigator} />
+        )}
+        <Stack.Screen name="GameStats" component={GameStats} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
 }
 
 export default function App() {

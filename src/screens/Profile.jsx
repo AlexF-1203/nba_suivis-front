@@ -132,9 +132,9 @@ const ProfileScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.sectionTitle}>PARAMÈTRES DU COMPTE</Text>
+        {/* <Text style={styles.sectionTitle}>PARAMÈTRES DU COMPTE</Text> */}
 
-        <MenuButton
+        {/* <MenuButton
           icon="person-outline"
           label="Modifier le profil"
           onPress={() => {}}
@@ -153,10 +153,10 @@ const ProfileScreen = ({ navigation }) => {
           icon="color-palette-outline"
           label="Apparence"
           onPress={() => {}}
-        />
+        /> */}
 
         <Text style={[styles.sectionTitle, styles.supportSection]}>SUPPORT</Text>
-
+{/* 
         <MenuButton
           icon="help-circle-outline"
           label="Centre d'aide"
@@ -177,7 +177,7 @@ const ProfileScreen = ({ navigation }) => {
           label="Tester Notification"
           onPress={handleTestNotification}
         />
-
+ */}
 
         <MenuButton
           icon="log-out-outline"
