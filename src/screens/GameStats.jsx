@@ -77,7 +77,6 @@ const GameStats = ({ route }) => {
         });
         setPlayers(playersMap);
 
-        // Trier les joueurs par points
         const sortedTeam1Players = playerGames
           .filter(pg => pg.team_id === gameResponse.data.team_1.id)
           .sort((a, b) => b.points - a.points);

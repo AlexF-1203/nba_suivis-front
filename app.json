@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "frontend",
+    "name": "StatsFollow",
     "slug": "stats-ball",
     "extra": {
       "firebaseApiKey": "AIzaSyCiH2KoZ7U3a18Ak3jWKpigOF4AGJiMWYA",
@@ -11,7 +11,7 @@
     },
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo_app.png",
     "userInterfaceStyle": "dark",
     "androidStatusBar": {
       "backgroundColor": "#1a1a1a",
@@ -36,7 +36,7 @@
         "NOTIFICATIONS"
       ],
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/logo_app.png",
         "backgroundColor": "#1a1a1a"
       },
       "navigationBar": {

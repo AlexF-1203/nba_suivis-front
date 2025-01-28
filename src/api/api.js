@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const API_URL = 'https://5000-88-184-112-195.ngrok-free.app/api/v1';
+export const API_URL = 'https://stats-basket-d69a4088f352.herokuapp.com/api/v1';
 
 const api = axios.create({
   baseURL: API_URL,
